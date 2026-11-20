@@ -110,15 +110,16 @@ for (let x = 0; x < W; x++) {
 const distance = Math.abs(x-center)/center;
 
 // Progressive compression toward the center
-const warped = Math.pow(
-distance,
-SETTINGS.convergence
-);
+const warped = Math.pow(distance, SETTINGS.convergence);
 
-// New stripes continuously enter from the edges
-phases[x] =
-warped * SETTINGS.frequency + t;
-}
+const distortion =
+0.018 * Math.sin(x * 0.025) +
+0.009 * Math.sin(x * 0.071);
+
+const phase =
+(warped + distortion * distance) * SETTINGS.frequency +
+t +
+0.035 * Math.sin(x * 0.013);
 
 // Render the complete image
 for (let y = 0; y < H; y++) {
