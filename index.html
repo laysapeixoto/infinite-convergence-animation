@@ -129,10 +129,28 @@ const vertical = y/H;
 // Horizontal cream-colored light
 const glow = Math.exp(
 -Math.pow(
-(vertical-SETTINGS.glowPosition) /
-SETTINGS.glowWidth,
+(vertical - SETTINGS.glowPosition) / SETTINGS.glowWidth,
 2
 )
+);
+
+const halo = Math.exp(
+-Math.pow(
+(vertical - SETTINGS.glowPosition) / 0.19,
+2
+)
+);
+
+const core = Math.exp(
+-Math.pow(
+(vertical - SETTINGS.glowPosition) / 0.035,
+2
+)
+);
+
+const light = Math.min(
+1,
+glow * 0.55 + halo * 0.16 + core * 0.30
 );
 
 for (let x = 0; x < W; x++) {
