@@ -1,0 +1,179 @@
+<! DOCTYPE html>
+<html lang="eng">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale1">
+    <title> Infinite Blue Convergence</title>
+    <style>
+      * { margin: 0; padding: 0; }
+      html, body{
+        width= 100%;
+        height= 100%;
+        overflow= hidden;
+        background: #05051b;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="art"> </canvas>
+    <script>
+      const canvas= document.getElementByld("art");
+      const ctx = canvas.getContext("2d",{
+        alpha:false
+      });
+      let W, H, image, data;
+      const SETTINGS = {
+        speed: 0.00022,
+        frequency: 13,
+        convergence: 0.72,
+        softness: 0.045,
+        glowStrength: 0.85,
+        glowPosition: 0.50,
+        glowWidth: 0.105
+      };
+
+    // Palette
+      const palette = [
+        [3,3,25],
+        [8, 5, 32], // Almost black navy
+[8, 15, 49], // Midnight blue
+[5, 31, 82], // Dark cobalt
+[5, 64, 145], // Deep blue
+[0, 91, 205], // Cobalt
+[0, 126, 242], // Electric blue
+[26, 155, 255], // Bright blue
+[89, 189, 250], // Cyan blue
+[184, 218, 244], // Pale blue
+[255, 231, 181], // Warm cream
+[255, 239, 202]
+];
+
+const stops = [
+0.00, 0.12, 0.20, 0.29,
+0.39, 0.48, 0.57, 0.65,
+0.73, 0.82, 0.91, 1.00
+];
+
+function resize() {
+const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+W = Math.round(window.innerWidth * dpr);
+H = Math.round(window.innerHeight * dpr);
+
+canvas.width = W;
+canvas.height = H;
+
+image = ctx.createImageData(W, H);
+data = image.data;
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+function smooth(a, b, x) {
+const t = Math.max(0, Math.min(1, (x-a)/(b-a)));
+return t*t*(3-2*t);
+}
+
+function getPaletteColor(p) {
+p = ((p % 1) + 1) % 1;
+
+let i = 0;
+while (i < stops.length - 2 && p > stops[i+1]) i++;
+
+const t = smooth(
+stops[i],
+stops[i+1],
+p
+);
+
+return [
+palette[i][0] * (1-t) + palette[i+1][0] * t,
+palette[i][1] * (1-t) + palette[i+1][1] * t,
+palette[i][2] * (1-t) + palette[i+1][2] * t
+];
+}
+
+function render(time) {
+const t = time * SETTINGS.speed;
+const center = W / 2;
+
+// Calculate each vertical stripe position
+const phases = new Float32Array(W);
+
+for (let x = 0; x < W; x++) {
+const distance = Math.abs(x-center)/center;
+
+// Progressive compression toward the center
+const warped = Math.pow(
+distance,
+SETTINGS.convergence
+);
+
+// New stripes continuously enter from the edges
+phases[x] =
+warped * SETTINGS.frequency + t;
+}
+
+// Render the complete image
+for (let y = 0; y < H; y++) {
+
+const vertical = y/H;
+
+// Horizontal cream-colored light
+const glow = Math.exp(
+-Math.pow(
+(vertical-SETTINGS.glowPosition) /
+SETTINGS.glowWidth,
+2
+)
+);
+
+for (let x = 0; x < W; x++) {
+
+const phase = phases[x];
+
+// Slightly soften the transitions between bands
+const fractional = phase % 1;
+const color = getPaletteColor(fractional);
+
+let r = color[0];
+let g = color[1];
+let b = color[2];
+
+// Warm horizontal illumination
+const light = glow * SETTINGS.glowStrength;
+
+r = r*(1-light*0.58) + 255*light*0.58;
+g = g*(1-light*0.48) + 235*light*0.48;
+b = b*(1-light*0.25) + 198*light*0.25;
+
+// Subtle vertical atmospheric shading
+const verticalShade =
+0.84 + 0.16 * Math.pow(
+Math.abs(vertical-0.5)*2, 1.5
+);
+
+const index = (y*W+x)*4;
+
+data[index] = r*verticalShade;
+data[index+1] = g*verticalShade;
+data[index+2] = b*verticalShade;
+data[index+3] = 255;
+}
+}
+
+ctx.putImageData(image, 0, 0);
+
+requestAnimationFrame(render);
+}
+
+requestAnimationFrame(render);
+</script>
+</body>
+</html>
